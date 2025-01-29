@@ -234,6 +234,14 @@ function App() {
               onChange={(e) => setFaucetAmount(e.target.value)}
             />
             <button onClick={() => requestAirdrop(addr.id)}>Fund (Faucet)</button>
+            <a 
+              href="https://faucet.solana.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ marginLeft: "10px", textDecoration: "underline", color: "#1a73e8" }}
+            >
+              Use Solana Faucet Website
+            </a>
           </div>
 
           <button
