@@ -18,7 +18,7 @@ function App() {
   // 1) Setup connection to Solana Testnet
   // ---------------------------------------------------------------------------
   const [connection] = useState(
-    () => new Connection(clusterApiUrl("devnet"), "confirmed")
+    () => new Connection(clusterApiUrl(process.env.REACT_APP_SOLANA_NETWORK), "confirmed")
   );
 
   // ---------------------------------------------------------------------------
@@ -265,7 +265,15 @@ function App() {
             <strong>Public Key:</strong> {addr.publicKey}{" "}
             <button onClick={() => copyToClipboard(addr.publicKey)}>
               Copy
-            </button>
+            </button>{" "}
+            <a
+              href={`https://explorer.solana.com/address/${addr.publicKey}?cluster=${process.env.REACT_APP_SOLANA_NETWORK}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: "underline", color: "#1a73e8" }}
+            >
+              View in Explorer
+            </a>
           </p>
           <p>
             <strong>Private Key:</strong>{" "}
