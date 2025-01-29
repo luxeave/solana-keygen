@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Connection,
   PublicKey,
@@ -242,12 +242,111 @@ function App() {
     }
   };
 
+  const fileInputRef = useRef(null);
+
+  // Backup keypairs to file
+  const backupKeypairs = () => {
+    try {
+      const data = JSON.stringify(addresses, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'solana-keypairs.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error backing up keypairs:', err);
+      alert('Failed to backup keypairs: ' + err.message);
+    }
+  };
+
+  // Load keypairs from file
+  const loadKeypairs = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const loadedAddresses = JSON.parse(e.target.result);
+        
+        // Validate the loaded data structure
+        if (!Array.isArray(loadedAddresses)) {
+          throw new Error('Invalid file format: expected an array of keypairs');
+        }
+        
+        // Validate each keypair
+        loadedAddresses.forEach(addr => {
+          if (!addr.publicKey || !addr.privateKey || !addr.id) {
+            throw new Error('Invalid keypair format');
+          }
+          // Validate Solana public key format
+          try {
+            new PublicKey(addr.publicKey);
+          } catch (err) {
+            throw new Error('Invalid public key format');
+          }
+          // Validate private key format (should be base58 encoded)
+          try {
+            const decoded = bs58.decode(addr.privateKey);
+            if (decoded.length !== 64) {
+              throw new Error('Invalid private key length');
+            }
+          } catch (err) {
+            throw new Error('Invalid private key format');
+          }
+        });
+
+        // Merge with existing addresses, avoiding duplicates
+        setAddresses(prev => {
+          const existingPubKeys = new Set(prev.map(a => a.publicKey));
+          const newAddresses = loadedAddresses.filter(addr => !existingPubKeys.has(addr.publicKey));
+          return [...prev, ...newAddresses];
+        });
+        
+        alert('Successfully loaded keypairs');
+      } catch (err) {
+        console.error('Error loading keypairs:', err);
+        alert('Failed to load keypairs: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <h1>Solana Keypair Demo</h1>
 
-      {/* Create New Address */}
-      <button onClick={createSolanaAddress}>Create New Keypair</button>
+      {/* Create New Address and Backup/Load buttons */}
+      <div style={{ marginBottom: "20px" }}>
+        <button 
+          onClick={createSolanaAddress}
+          style={{ marginRight: "10px" }}
+        >
+          Create New Keypair
+        </button>
+        <button 
+          onClick={backupKeypairs}
+          style={{ marginRight: "10px" }}
+        >
+          Backup Keypairs
+        </button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept=".json"
+          onChange={loadKeypairs}
+        />
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+        >
+          Load Keypairs
+        </button>
+      </div>
 
       <hr />
 
