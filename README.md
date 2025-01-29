@@ -1,70 +1,135 @@
-# Getting Started with Create React App
+# Solana Keygen App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This application demonstrates how to:
+* Generate and manage Solana keypairs (public/private keys)
+* Store keypairs locally and back them up
+* Request airdrops on the Solana test network
+* Transfer SOL (test tokens) between addresses
+* Load existing keypairs from a file
 
-## Available Scripts
+It is intended for development and testing only. This application should not be used in production with real assets on mainnet.
 
-In the project directory, you can run:
+## Table of Contents
+1. [Features](#features)
+2. [Prerequisites](#prerequisites)
+3. [Environment Variables](#environment-variables)
+4. [Installation & Local Deployment](#installation--local-deployment)
+5. [Usage](#usage)
+6. [Backup and Restore Keypairs](#backup-and-restore-keypairs)
+7. [Important Notes](#important-notes)
 
-### `npm start`
+## Features
+* Generate New Keypairs: Creates a new Solana keypair on demand
+* Local Storage: Saves generated keypairs (public/private) in the browser's localStorage
+* Balance Checks: Retrieves and displays each account's balance (in SOL)
+* Airdrop: Requests SOL on the specified network (e.g., devnet/testnet) for development testing
+* Transfer: Send SOL to any valid Solana address
+* Backup/Restore: Export keypairs to a .json file and import them back
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Prerequisites
+* Node.js (v14 or later recommended)
+* NPM or Yarn
+* A Solana cluster for testing, e.g. testnet or devnet
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Environment Variables
 
-### `npm test`
+Create a file named `.env` in the root of your project (same level as package.json), then add the following key:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+REACT_APP_SOLANA_NETWORK=<network>
+```
 
-### `npm run build`
+Where `<network>` can be one of:
+* devnet
+* testnet
+* mainnet-beta (not recommended for testing with real assets)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+For example:
+```
+REACT_APP_SOLANA_NETWORK=testnet
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+**Note:**
+1. The `REACT_APP_` prefix is required for create-react-app to automatically load environment variables
+2. Do not include private keys in your `.env` file
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Installation & Local Deployment
 
-### `npm run eject`
+1. Clone this repository:
+```bash
+git clone https://github.com/your-username/solana-keygen.git
+cd solana-keygen
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+2. Install Dependencies:
+```bash
+npm install
+# or
+yarn
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. Set Environment Variables:
+   * Create a file named `.env` in the project root
+   * Add `REACT_APP_SOLANA_NETWORK=<network>` to it. Example:
+```
+REACT_APP_SOLANA_NETWORK=testnet
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+4. Start Development Server:
+```bash
+npm start
+# or
+yarn start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+By default, it will open in http://localhost:3000.
 
-## Learn More
+## Usage
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Once running locally, open your browser at http://localhost:3000.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 1. Create New Keypair
+* Click Create New Keypair
+* A new keypair (public and private key) will appear in the list
+* The public key is always displayed. The private key is hidden by default
 
-### Code Splitting
+### 2. Show / Hide Private Key
+* Use the Show/Hide toggle to reveal or conceal your private key
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 3. Balance & Airdrop
+* Click Refresh Balance to fetch the current balance on the chosen cluster (testnet or devnet)
+* To get test SOL, enter the amount (up to 2 SOL in the code) in the input box, then click Fund (Faucet)
+* This uses Solana's requestAirdrop() API
+* If desired, open the Solana Faucet Website link to manually request funds
 
-### Analyzing the Bundle Size
+### 4. Transfer SOL
+* Under Transfer SOL, select the From Address from your generated keypairs
+* Enter the To Public Key (any valid Solana address)
+* Enter an Amount (SOL)
+* Click Transfer to perform the transaction
+* A transaction signature will be displayed upon success (or an error if it fails)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 5. Delete Address
+* Click Delete Address to remove it from local storage
+* This action is permanent unless you have a backup
 
-### Making a Progressive Web App
+## Backup and Restore Keypairs
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 1. Backup Keypairs
+* Click Backup Keypairs to download a solana-keypairs.json file
+* This JSON file includes public/private keys for all addresses currently in local storage
 
-### Advanced Configuration
+### 2. Load Keypairs
+* Click Load Keypairs and choose a .json file (e.g. the previously downloaded backup)
+* The file must contain an array of addresses with publicKey, privateKey, and id fields in the correct format
+* Existing keypairs in local storage will remain; new ones from the file will be added if they're not duplicates
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+> **Warning:** Always keep your private keys in a secure place and never commit them to a public repository!
 
-### Deployment
+## Important Notes
+* This sample uses the Solana Web3.js library to interact with the blockchain
+* The environment variable `REACT_APP_SOLANA_NETWORK` determines which cluster you connect to
+* Never use the private keys generated by this project for production or real Mainnet funds
+* This project is for development and educational purposes only
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Enjoy exploring Solana development! Feel free to open issues or contribute improvements to this project.
