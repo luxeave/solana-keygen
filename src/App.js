@@ -10,6 +10,9 @@ import {
 } from "@solana/web3.js";
 import bs58 from "bs58";
 
+// Polyfill for Buffer
+window.Buffer = window.Buffer || require('buffer').Buffer;
+
 function App() {
   // ---------------------------------------------------------------------------
   // 1) Setup connection to Solana Testnet
@@ -143,17 +146,49 @@ function App() {
   const transferSOL = async () => {
     try {
       const { fromId, toPubkey, amount } = transferData;
+      
+      // Input validation
+      if (!fromId || !toPubkey || !amount) {
+        alert("Please fill in all transfer details");
+        return;
+      }
+
       const fromAddr = addresses.find((item) => item.id.toString() === fromId);
       if (!fromAddr) {
         alert("Invalid From address selection.");
         return;
       }
 
+      // Validate amount is a positive number
+      const transferAmount = parseFloat(amount);
+      if (isNaN(transferAmount) || transferAmount <= 0) {
+        alert("Please enter a valid positive amount");
+        return;
+      }
+
+      // Check if sender has sufficient balance (including fees)
+      const senderBalance = parseFloat(fromAddr.balance);
+      if (senderBalance < transferAmount + 0.000005) { // Adding a small amount for fees
+        alert("Insufficient balance. Please ensure you have enough SOL for transfer and fees.");
+        return;
+      }
+
+      // Validate destination address
+      let toPublicKey;
+      try {
+        toPublicKey = new PublicKey(toPubkey);
+        if (!PublicKey.isOnCurve(toPublicKey.toBytes())) {
+          alert("Invalid destination address");
+          return;
+        }
+      } catch (err) {
+        alert("Invalid destination address format");
+        return;
+      }
+
       const secretKey = bs58.decode(fromAddr.privateKey);
       const fromKeypair = Keypair.fromSecretKey(secretKey);
-
-      const toPublicKey = new PublicKey(toPubkey);
-      const lamports = parseFloat(amount) * LAMPORTS_PER_SOL;
+      const lamports = transferAmount * LAMPORTS_PER_SOL;
 
       const transaction = new Transaction().add(
         SystemProgram.transfer({
@@ -164,7 +199,7 @@ function App() {
       );
 
       transaction.feePayer = fromKeypair.publicKey;
-      const { blockhash } = await connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
 
       transaction.sign(fromKeypair);
@@ -172,14 +207,38 @@ function App() {
       const signature = await connection.sendRawTransaction(
         transaction.serialize()
       );
-      await connection.confirmTransaction(signature, "confirmed");
 
-      alert(`Transfer successful! TX Signature: ${signature}`);
+      console.log("Transaction sent:", signature);
+      
+      // Wait for confirmation with timeout
+      const confirmation = await Promise.race([
+        connection.confirmTransaction({
+          signature,
+          blockhash,
+          lastValidBlockHeight
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Transaction confirmation timeout")), 30000)
+        )
+      ]);
 
-      refreshBalance(fromAddr.id);
+      if (confirmation?.value?.err) {
+        throw new Error("Transaction failed: " + JSON.stringify(confirmation.value.err));
+      }
+
+      alert(`Transfer successful! Transaction signature: ${signature}`);
+      await refreshBalance(fromAddr.id);
+      
+      // Clear transfer form
+      setTransferData({
+        fromId: "",
+        toPubkey: "",
+        amount: "",
+      });
+      
     } catch (err) {
       console.error("Error transferring SOL:", err);
-      alert("Transfer failed!");
+      alert(`Transfer failed: ${err.message}`);
     }
   };
 
